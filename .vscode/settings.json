@@ -1,0 +1,26 @@
+{
+  "cSpell.words": [
+    "dlib",
+    "DMSDK"
+  ],
+  "files.associations": {
+    "__debug": "cpp",
+    "__hash_table": "cpp",
+    "__string": "cpp",
+    "algorithm": "cpp",
+    "array": "cpp",
+    "atomic": "cpp",
+    "bitset": "cpp",
+    "cstddef": "cpp",
+    "ios": "cpp",
+    "iterator": "cpp",
+    "locale": "cpp",
+    "memory": "cpp",
+    "sstream": "cpp",
+    "string": "cpp",
+    "string_view": "cpp",
+    "unordered_map": "cpp",
+    "vector": "cpp",
+    "random": "cpp"
+  }
+}

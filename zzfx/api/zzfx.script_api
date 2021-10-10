@@ -1,0 +1,19 @@
+- name: zzfx
+  type: table
+  desc: ZzFX functions for building and playing samples
+
+  members:
+
+#*****************************************************************************************************
+
+  - name: build_sample
+    type: function
+    desc: Build a sample from a zzfx parameter list
+
+#*****************************************************************************************************
+
+  - name: play_sample
+    type: function
+    desc: Play a built sample
+
+#*****************************************************************************************************

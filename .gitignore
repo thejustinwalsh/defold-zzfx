@@ -1,0 +1,14 @@
+/.internal
+/build
+.externalToolBuilders
+.DS_Store
+Thumbs.db
+.lock-wscript
+*.pyc
+.project
+.cproject
+builtins
+
+/zzfx/include/dmsdk/*
+!/zzfx/include/dmsdk/sound
+!/zzfx/include/dmsdk/sound/**/*
