@@ -1,5 +1,5 @@
 # ZzFX Defold Extension
-> Zuper Small Zound Zynth
+> Zuper Zmall Zound Zynth
 
 ### [ZzFX Sound Designer](https://killedbyapixel.github.io/ZzFX/)
 

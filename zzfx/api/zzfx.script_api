@@ -1,4 +1,4 @@
-- name: zzfx
+- name: zzfx_ext
   type: table
   desc: ZzFX functions for building and playing samples
 
@@ -14,6 +14,6 @@
 
   - name: play_sample
     type: function
-    desc: Play a built sample
+    desc: Play a built sample.
 
 #*****************************************************************************************************

@@ -1,5 +1,5 @@
 #define LIB_NAME "ZzFX"
-#define MODULE_NAME "zzfx"
+#define MODULE_NAME "zzfx_ext"
 #define DLIB_LOG_DOMAIN "ZZFX"
 
 #include <random>
@@ -83,7 +83,7 @@ namespace Util {
 
 // isSample - check for sample userdata
 BufferUserData* isSample(lua_State* L, int index) {
-    void* pUserData = luaL_checkudata(L, index, MODULE_NAME"Sample");
+    void* pUserData = luaL_checkudata(L, index, MODULE_NAME"_sample");
     luaL_argcheck(L, pUserData != NULL, index, "sample expected");
 
     return (BufferUserData*)pUserData;
@@ -288,7 +288,7 @@ static int buildSample(lua_State* L) {
     
     // Return lua userdata to track samples
     *(BufferUserData*)lua_newuserdata(L, sizeof(BufferUserData)) = bufferUserData;
-    if (luaL_newmetatable(L, MODULE_NAME"Sample")) {        
+    if (luaL_newmetatable(L, MODULE_NAME"_sample")) {        
         lua_pushcfunction(L, returnSample); lua_setfield(L, -2, "__gc");
         lua_pushvalue(L, -1); lua_setfield(L, -2, "__index");
     }
