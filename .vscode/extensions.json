@@ -1,0 +1,6 @@
+{
+	"recommendations": [
+		"ts-defold.defold-vscode-build",
+		"ms-vscode.cpptools"
+	],
+}
