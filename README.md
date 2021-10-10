@@ -1,7 +1,7 @@
 # ZzFX Defold Extension
 > Zuper Small Zound Zynth
 
-### [ZzFX Sound Designer]https://killedbyapixel.github.io/ZzFX/
+### [ZzFX Sound Designer](https://killedbyapixel.github.io/ZzFX/)
 
 Port of [ZzFX](https://killedbyapixel.github.io/ZzFX/) for the [Defold Game Engine](https://defold.com)
 
