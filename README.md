@@ -7,3 +7,10 @@ Port of [ZzFX](https://killedbyapixel.github.io/ZzFX/) for the [Defold Game Engi
 
 # WIP
 > Pending release while I work through some bugs
+### Known Issues
+- Some generator functions fail to produce sound
+- Pops and clicks
+
+# Attribution
+- Port of soundboard and core [ZzFX](https://github.com/KilledByAPixel/ZzFX) by @KilledByAPixel
+- Emoji graphics from [twemoji](https://github.com/twitter/twemoji) by @twitter
