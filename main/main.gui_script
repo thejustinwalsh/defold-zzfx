@@ -1,6 +1,7 @@
 local zzfx_api = require("zzfx.api")
 local zzfx = zzfx_api.play;
 
+local logo, tagline = nil, nil
 local buttons = {}
 local fx = {
 	{0,0,1675,0,0.06,0.24,1,1.82,0,0,837,0.06},
@@ -39,7 +40,15 @@ local fx = {
 
 function init(self)
 	msg.post(".", "acquire_input_focus")
+
+	-- init logo and tagline
+	logo = gui.get_node("logo")
+	gui.set_color(logo, vmath.vector4(math.random(), math.random(), math.random(), 1))
 	
+	tagline = gui.get_node("tagline")
+	gui.set_color(tagline, vmath.vector4(math.random(), math.random(), math.random(), 1))
+	
+	-- cache buttons
 	for i=1,32 do
 		buttons[i] = gui.get_node("button_" .. i);
 	end
@@ -50,6 +59,8 @@ function on_input(self, action_id, action)
 		for i=1,#buttons do
 			if gui.pick_node(buttons[i], action.x, action.y) then
 				zzfx(unpack(fx[i]))
+				gui.set_color(logo, vmath.vector4(math.random(), math.random(), math.random(), 1))
+				gui.set_color(tagline, vmath.vector4(math.random(), math.random(), math.random(), 1))
 			end
 		end
 	end

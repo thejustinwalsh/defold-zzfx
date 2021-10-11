@@ -20,3 +20,8 @@ version = 0.1
 [library]
 include_dirs = zzfx
 
+[render]
+clear_color_red = 0.13
+clear_color_green = 0.13
+clear_color_blue = 0.13
+
