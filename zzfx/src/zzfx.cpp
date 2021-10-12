@@ -198,7 +198,7 @@ static int buildSample(lua_State* L) {
     int length = 0, i = 0, j = 1, r = 0, c = 0;
 
     // scale by sample rate
-    attack = attack * sampleRate + 18; // minimum attack to prevent pop
+    attack = attack * sampleRate + 9; // minimum attack to prevent pop
     decay *= sampleRate;
     sustain *= sampleRate;
     release *= sampleRate;
@@ -217,15 +217,15 @@ static int buildSample(lua_State* L) {
     Util::wavHeader(b, length);
 
     // generate waveform
-    for(;i < length; b[Util::WAV_HEADER + i++] = s >= 1.0 ? 32767 : (int16_t)(s * 32768.0))
+    for(;i < length; b[Util::WAV_HEADER + i++] = s >= 1.0 ? (1<<15) - 1 : (int16_t)(s * (1<<15)))
     {
-        auto bc = (int)bitCrush*100; ++c;                   // bit crush
+        auto bc = (int)(bitCrush*100); ++c;                   // bit crush
         if (bc != 0 ? c%bc == 0 : true)
         { 
-            s = shape>0? shape>1? shape>2? shape>3?         // wave shape
+            s = shape != 0 ? shape>1? shape>2? shape>3?     // wave shape
                 sin(pow(fmod(t,PI2),3.0)) :                 // 4 noise
                 fmax(fmin(tan(t),1.0),-1.0):                // 3 tan
-                1-(fmod(fmod(2*t/PI2,2.0)+2,2.0)):          // 2 saw
+                1-fmod(fmod(2*t/PI2,2)+2,2):                // 2 saw
                 1-4*fabs(roundf(t/PI2)-t/PI2):              // 1 triangle
                 sin(t);                                     // 0 sin
 
@@ -246,21 +246,21 @@ static int buildSample(lua_State* L) {
 
             s = delay != 0 ? s/2.0 + (delay > i ? 0 :       // delay
                 (i<length-delay? 1.0 : (length-i)/delay) *  // release delay 
-                (b[i-((int)delay)] / 32767.0) / 2.0) : s;   // sample delay
+                (b[i-(int)delay] / 32767.0) / 2.0) : s;   // sample delay
         }
 
         f = (frequency += slide += deltaSlide) *            // frequency
             cos(modulation*tm++);                           // modulation
-        t += f - f*noise*(1.0 - (sin(i)+1)*fmod(1e9, 2.0)); // noise
+        t += f - f*noise*(1 - fmod((sin(i)+1)*1e9, 2));     // noise
 
-        if (j > 0 && ++j > pitchJumpTime)       // pitch jump
+        if (j != 0 && ++j > pitchJumpTime)       // pitch jump
         {
             frequency += pitchJump;         // apply pitch jump
             startFrequency += pitchJump;    // also apply to start
             j = 0;                          // stop pitch jump time
         }
 
-        if (repeatTime != 0 && ++r % (int32_t)repeatTime == 0) // repeat
+        if (repeatTime != 0 && (++r % (int32_t)repeatTime) == 0) // repeat
         {
             frequency = startFrequency;     // reset frequency
             slide = startSlide;             // reset slide
