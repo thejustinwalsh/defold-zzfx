@@ -25,3 +25,7 @@ clear_color_red = 0.13
 clear_color_green = 0.13
 clear_color_blue = 0.13
 
+[html5]
+htmlfile = /manifests/web/template.html
+cssfile = /builtins/manifests/web/light_theme.css
+
