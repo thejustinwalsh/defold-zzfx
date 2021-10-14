@@ -193,7 +193,6 @@ static int buildSample(lua_State* L) {
     double startSlide = slide *= 500 * PI2 / sampleRate / sampleRate;
     double startFrequency = frequency *= 
         (1 + randomness * 2 * Util::random() - randomness) * PI2 / sampleRate;
-    auto &b = *bufferUserData.buffer;
     double t = 0, tm = 0, s = 0, f = 0;
     int length = 0, i = 0, j = 1, r = 0, c = 0;
 
@@ -210,14 +209,13 @@ static int buildSample(lua_State* L) {
     repeatTime = floor(repeatTime * sampleRate);
 
     // Initialize audio buffer
+    static dmArray<double> buffer;
     length = (int)(attack + decay + sustain + release + delay);
-    const int bufferSize = length + Util::WAV_HEADER;
-    if (bufferSize > b.Capacity()) b.SetCapacity(bufferSize);
-    b.SetSize(bufferSize);
-    Util::wavHeader(b, length);
+    if (length > buffer.Capacity()) buffer.SetCapacity(length);
+    buffer.SetSize(length);
 
     // generate waveform
-    for(;i < length; b[Util::WAV_HEADER + i++] = s >= 1.0 ? (1<<15) - 1 : (int16_t)(s * (1<<15)))
+    for(;i < length; buffer[i++] = s)
     {
         auto bc = (int)(bitCrush*100); ++c;                   // bit crush
         if (bc != 0 ? c%bc == 0 : true)
@@ -244,9 +242,9 @@ static int buildSample(lua_State* L) {
                 sustainVolume :                             // release volume
                 0);                                         // post release
 
-            s = delay != 0 ? s/2.0 + (delay > i ? 0 :       // delay
-                (i<length-delay? 1.0 : (length-i)/delay) *  // release delay 
-                (b[i-(int)delay] / 32767.0) / 2.0) : s;   // sample delay
+            s = delay != 0 ? s/2.0 + (((int)delay) > i ? 0 :       // delay
+                (i<length-(int)delay? 1.0 : (length-i)/delay) *      // release delay 
+                buffer[i-(int)delay] / 2.0) : s;                    // sample delay
         }
 
         f = (frequency += slide += deltaSlide) *            // frequency
@@ -268,12 +266,20 @@ static int buildSample(lua_State* L) {
         }
     }
 
-    // Create the Sound Data object
+    // Encode the WAV and create the Sound Data object
+    auto& target = *bufferUserData.buffer;
+    const int targetLength = length + Util::WAV_HEADER;
+    if (targetLength > target.Capacity()) target.SetCapacity(targetLength);
+    target.SetSize(targetLength);
+    Util::wavHeader(target, length);
+    
+    for (int i = 0; i < length; ++i) target[Util::WAV_HEADER + i] = buffer[i] >= 1.0 ? (1<<15) - 1 : (int16_t)(buffer[i] * (1<<15));
+
     char name[32] = {0};
     sprintf(name, "zzfx-%d", bufferUserData.index);
     auto result = dmSound::NewSoundData(
-        bufferUserData.buffer->Begin(), 
-        bufferUserData.buffer->Size() * sizeof(int16_t), 
+        target.Begin(), 
+        target.Size() * sizeof(int16_t),
         dmSound::SoundDataType::SOUND_DATA_TYPE_WAV, 
         &bufferUserData.soundData,
         dmHashString64(name)
