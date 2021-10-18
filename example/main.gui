@@ -1,11 +1,11 @@
-script: "/main/main.gui_script"
+script: "/example/main.gui_script"
 fonts {
   name: "system_font"
   font: "/builtins/fonts/system_font.font"
 }
 textures {
   name: "twemoji"
-  texture: "/main/main.atlas"
+  texture: "/example/main.atlas"
 }
 background_color {
   x: 0.0
