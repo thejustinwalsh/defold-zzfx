@@ -4,6 +4,7 @@
 
 #include <random>
 #include <dmsdk/sdk.h>
+#include <dmsdk/sound/sound.h>
 
 // TODO: Allow configuration of buffer count
 static const int BUFFER_COUNT = 32;
@@ -21,6 +22,9 @@ namespace
         int index;
         dmArray<int16_t> *buffer;
         dmSound::HSoundData soundData;
+
+        BufferUserData() : index(-1), buffer(0), soundData(0) {}
+        BufferUserData(int index, dmArray<int16_t> *buffer) : index(index), buffer(buffer), soundData(0) {}
     };
 
     // Audio Buffers
@@ -32,15 +36,16 @@ namespace
     dmArray<dmSound::HSoundInstance> bufferInstances[BUFFER_COUNT];
 
     // Get an available audio buffer
-    auto getBuffer = []() {
-        if (freeBuffers.Empty()) return BufferUserData{-1, nullptr, nullptr};
+    BufferUserData getBuffer()
+    {
+        if (freeBuffers.Empty()) return BufferUserData();
 
         // Get a free buffer
         int index = freeBuffers[freeBuffers.Size() - 1];
         freeBuffers.Pop();
         
         // Return a usable buffer and the free index to return to
-        return BufferUserData{index, &sampleBuffers[index], nullptr};
+        return BufferUserData(index, &sampleBuffers[index]);
     };
 }
 
@@ -50,11 +55,15 @@ namespace Util {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<float> dis(.0, 1.0);
-    auto random = []() { return dis(gen); };
+    inline float random() { return dis(gen); };
 
-    // WAV HEADER -- Deprecate once we have a raw buffer time available
+    // Get the sign of a number
+    double sign(double v) { return v > 0 ? 1 : -1; };
+
+    // WAV HEADER -- Deprecate once we have a raw buffer available
     const int WAV_HEADER = 23;
-    auto wavHeader = [](dmArray<int16_t> &buffer, int length, int channels = 1) {
+    void wavHeader(dmArray<int16_t> &buffer, int length, int channels = 1)
+    {
         buffer[ 0] = 0x4952; // RI
         buffer[ 1] = 0x4646; // FF
         buffer[ 2] = (2 * length + 15) & 0x0000ffff; // RIFF size
@@ -115,7 +124,7 @@ static int playSample(lua_State* L) {
     BufferUserData * bufferUserData = isSample(L, 1);
 
     dmSound::HSoundInstance instance;
-    auto result = dmSound::NewSoundInstance(bufferUserData->soundData, &instance);
+    dmSound::Result result = dmSound::NewSoundInstance(bufferUserData->soundData, &instance);
     if (result != dmSound::RESULT_OK)
     {
         dmLogWarning("Failed to create sound instance: %d", result);
@@ -139,7 +148,7 @@ static int playSample(lua_State* L) {
     }
 
     // Store instances for lookup on update
-    auto &instances = bufferInstances[bufferUserData->index];
+    dmArray<dmSound::HSoundInstance> &instances = bufferInstances[bufferUserData->index];
     if (instances.Full()) instances.SetCapacity(instances.Capacity() + BUFFER_INSTANCE_COUNT);
     instances.Push(instance);
 
@@ -150,7 +159,7 @@ static int buildSample(lua_State* L) {
     DM_LUA_STACK_CHECK(L, 1);
 
     // Reserve an audio buffer
-    auto bufferUserData = getBuffer();
+    BufferUserData bufferUserData = getBuffer();
     if (bufferUserData.index == -1)
     { 
         dmLogWarning("Out of ZzFX Audio Buffers!");
@@ -189,7 +198,6 @@ static int buildSample(lua_State* L) {
 
     // Init parameters
     double PI2 = M_PI * 2;
-    auto sign = [](double v) { return v > 0 ? 1 : -1; };
     double startSlide = slide *= 500 * PI2 / sampleRate / sampleRate;
     double startFrequency = frequency *= 
         (1 + randomness * 2 * Util::random() - randomness) * PI2 / sampleRate;
@@ -217,7 +225,7 @@ static int buildSample(lua_State* L) {
     // generate waveform
     for(;i < length; buffer[i++] = s)
     {
-        auto bc = (int)(bitCrush*100); ++c;                   // bit crush
+        int bc = (int)(bitCrush*100); ++c;                   // bit crush
         if (bc != 0 ? c%bc == 0 : true)
         { 
             s = shape != 0 ? shape>1? shape>2? shape>3?     // wave shape
@@ -230,7 +238,7 @@ static int buildSample(lua_State* L) {
             s = (repeatTime != 0 ?
                     1 - tremolo + tremolo * sin(PI2*i/repeatTime) // tremolo
                     : 1) *
-                sign(s) * pow(fabs(s), shapeCurve) *        // curve 0=square, 2=pointy
+                Util::sign(s) * pow(fabs(s), shapeCurve) *  // curve 0=square, 2=pointy
                 volume * loudness * (                       // envelope
                 i < attack ? i/attack :                     // attack
                 i < attack + decay ?                        // decay
@@ -267,7 +275,7 @@ static int buildSample(lua_State* L) {
     }
 
     // Encode the WAV and create the Sound Data object
-    auto& target = *bufferUserData.buffer;
+    dmArray<int16_t> &target = *bufferUserData.buffer;
     const int targetLength = length + Util::WAV_HEADER;
     if (targetLength > target.Capacity()) target.SetCapacity(targetLength);
     target.SetSize(targetLength);
@@ -277,10 +285,10 @@ static int buildSample(lua_State* L) {
 
     char name[32] = {0};
     sprintf(name, "zzfx-%d", bufferUserData.index);
-    auto result = dmSound::NewSoundData(
+    dmSound::Result result = dmSound::NewSoundData(
         target.Begin(), 
         target.Size() * sizeof(int16_t),
-        dmSound::SoundDataType::SOUND_DATA_TYPE_WAV, 
+        dmSound::SOUND_DATA_TYPE_WAV, 
         &bufferUserData.soundData,
         dmHashString64(name)
     );
@@ -359,10 +367,10 @@ dmExtension::Result update(dmExtension::Params* params)
     // Delete the instance if it is done playing
     for (int i = 0; i < BUFFER_COUNT; i++)
     {
-        auto &instances = bufferInstances[i];
+        dmArray<dmSound::HSoundInstance> &instances = bufferInstances[i];
         for (int j = instances.Size() - 1; j >= 0; j--)
         {
-            auto &instance = instances[j];
+            dmSound::HSoundInstance &instance = instances[j];
             if (!dmSound::IsPlaying(instance)) {
                 instances.EraseSwap(j);
                 dmSound::DeleteSoundInstance(instance);
@@ -373,7 +381,7 @@ dmExtension::Result update(dmExtension::Params* params)
     // Delete the sound data if there are no active instances left
     for (int i = bufferReturnQueue.Size() - 1; i >= 0; i--)
     {
-        auto &bufferUserData = bufferReturnQueue[i];
+        BufferUserData &bufferUserData = bufferReturnQueue[i];
         if (bufferInstances[bufferUserData.index].Size() == 0) {
             bufferReturnQueue.EraseSwap(i);
             dmSound::DeleteSoundData(bufferUserData.soundData);

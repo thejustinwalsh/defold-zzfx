@@ -21,6 +21,7 @@
     "string_view": "cpp",
     "unordered_map": "cpp",
     "vector": "cpp",
-    "random": "cpp"
+    "random": "cpp",
+    "chrono": "cpp"
   }
 }
