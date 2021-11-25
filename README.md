@@ -8,7 +8,7 @@ Port of [ZzFX](https://killedbyapixel.github.io/ZzFX/) for the [Defold Game Engi
 ## Defold Setup
 Open your game.project file and in the dependencies field under project add:
 ```
-https://github.com/thejustinwalsh/zzfx-extension/archive/main.zip
+https://github.com/thejustinwalsh/defold-zzfx/archive/main.zip
 ```
 
 Require the zzfx.api script and play sound effects like so:
